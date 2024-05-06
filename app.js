@@ -126,8 +126,9 @@ app.post(
 );
 
 mongoose.connect(
-  "mongodb+srv://maratasmiles9:putoflan123@intprogapi.41polww.mongodb.net/?retryWrites=true&w=majority&appName=intprogAPI"
+  "mongodb+srv://maratasmiles9:putoflan123@intprogapi.41polww.mongodb.net/Itinerawise?retryWrites=true&w=majority&appName=intprogAPI"
 );
+
 mongoose.Promise = global.Promise;
 
 app.use((req, res, next) => {
