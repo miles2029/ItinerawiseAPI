@@ -9,7 +9,6 @@ const LocationDetails = require("./api/models/location");
 const User = require("./api/models/user");
 
 app.use(express.json());
-app.listen(3000);
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
 
