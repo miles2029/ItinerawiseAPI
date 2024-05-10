@@ -12,6 +12,7 @@ app.use(express.json());
 app.listen(3000);
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
+
 // para kuha sa detail sa location
 app.get("/details", (req, res, next) => {
   LocationDetails.find()
