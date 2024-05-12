@@ -130,63 +130,75 @@ app.post(
 );
 // para sign up ni
 app.post("/signup", upload.single("profileImage"), (req, res, next) => {
-  if (!req.file) {
-    return res.status(400).json({
-      error: {
-        message: "No file uploaded",
-      },
-    });
+  let profileImagePath = "";
+  if (req.file) {
+    profileImagePath = req.file.path;
   }
+
   if (!req.body.password || req.body.password.trim().length === 0) {
     return res.status(400).json({
       message: "Password cannot be empty",
     });
   }
+
   User.find({ email: req.body.email })
     .exec()
     .then((user) => {
       if (user.length >= 1) {
         return res.status(409).json({
-          message: "Mail exists",
+          message: "Email already exists",
         });
       } else {
-        bcrypt.hash(req.body.password, 10, (err, hash) => {
-          if (err) {
-            return res.status(500).json({
-              error: err,
-            });
-          } else {
-            const user = new User({
-              _id: new mongoose.Types.ObjectId(),
-              lastName: req.body.lastName,
-              firstName: req.body.firstName,
-              phoneNumber: req.body.phoneNumber,
-              email: req.body.email,
-              profileImage: req.file.path,
-              password: hash,
-            });
-            user
-              .save()
-              .then((result) => {
-                console.log(result);
-                res.status(201).json({
-                  message: "User created",
-                });
-              })
-              .catch((err) => {
-                console.log(err);
-                res.status(500).json({
-                  error: err,
-                });
+        User.find({ username: req.body.username })
+          .exec()
+          .then((user) => {
+            if (user.length >= 1) {
+              return res.status(409).json({
+                message: "Username already exists",
               });
-          }
-        });
+            } else {
+              bcrypt.hash(req.body.password, 10, (err, hash) => {
+                if (err) {
+                  return res.status(500).json({
+                    error: err,
+                  });
+                } else {
+                  const user = new User({
+                    _id: new mongoose.Types.ObjectId(),
+                    lastName: req.body.lastName,
+                    firstName: req.body.firstName,
+                    phoneNumber: req.body.phoneNumber,
+                    email: req.body.email,
+                    username: req.body.username,
+                    profileImage: profileImagePath,
+                    password: hash,
+                  });
+                  user
+                    .save()
+                    .then((result) => {
+                      console.log(result);
+                      res.status(201).json({
+                        message: "User created",
+                      });
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                      res.status(500).json({
+                        error: err,
+                      });
+                    });
+                }
+              });
+            }
+          });
       }
     });
 });
+
 ///// para log-in
-app.get("/login", (req, res, next) => {
-  User.findOne({ email: req.body.email })
+app.post("/login", (req, res, next) => {
+  const { email, username, password } = req.body;
+  User.findOne({ $or: [{ email: email }, { username: username }] })
     .exec()
     .then((user) => {
       if (!user) {
@@ -194,7 +206,7 @@ app.get("/login", (req, res, next) => {
           message: "Auth failed",
         });
       }
-      bcrypt.compare(req.body.password, user.password, (err, result) => {
+      bcrypt.compare(password, user.password, (err, result) => {
         if (err) {
           return res.status(401).json({
             message: "Auth failed",
@@ -209,6 +221,7 @@ app.get("/login", (req, res, next) => {
               lastName: user.lastName,
               firstName: user.firstName,
               phoneNumber: user.phoneNumber,
+              username: user.username,
               profileImage: user.profileImage,
             },
           });
@@ -225,6 +238,76 @@ app.get("/login", (req, res, next) => {
       });
     });
 });
+
+app.patch(
+  "/updateProfile/:id",
+  upload.single("profileImage"),
+  (req, res, next) => {
+    const id = req.params.id;
+    let profileImagePath = "";
+    if (req.file) {
+      profileImagePath = req.file.path;
+    }
+
+    const updateOps = {};
+    if (req.body.firstName) {
+      updateOps.firstName = req.body.firstName;
+    }
+    if (req.body.lastName) {
+      updateOps.lastName = req.body.lastName;
+    }
+    if (req.body.phoneNumber) {
+      updateOps.phoneNumber = req.body.phoneNumber;
+    }
+    if (profileImagePath) {
+      updateOps.profileImage = profileImagePath;
+    }
+    if (req.body.email) {
+      // Check if the email is valid
+      if (!validateEmail(req.body.email)) {
+        return res.status(400).json({
+          message: "Invalid email format",
+        });
+      }
+      updateOps.email = req.body.email;
+    }
+    if (req.body.password) {
+      bcrypt.hash(req.body.password, 10, (err, hash) => {
+        if (err) {
+          return res.status(500).json({
+            error: err,
+          });
+        }
+        updateOps.password = hash;
+        updateUser();
+      });
+    } else {
+      updateUser();
+    }
+
+    function updateUser() {
+      User.updateOne({ _id: id }, { $set: updateOps })
+        .exec()
+        .then((result) => {
+          res.status(200).json({
+            message: "Profile updated",
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).json({
+            error: err,
+          });
+        });
+    }
+  }
+);
+
+function validateEmail(email) {
+  // Use a regex pattern to validate the email format
+  const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  return regex.test(email);
+}
 
 mongoose.connect(
   "mongodb+srv://maratasmiles9:putoflan123@intprogapi.41polww.mongodb.net/Itinerawise?retryWrites=true&w=majority&appName=intprogAPI"
