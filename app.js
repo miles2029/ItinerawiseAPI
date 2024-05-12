@@ -4,10 +4,12 @@ const app = express();
 const multer = require("multer");
 const morgan = require("morgan");
 const bcrypt = require("bcrypt");
+const cors = require("cors");
 
 const LocationDetails = require("./api/models/location");
 const User = require("./api/models/user");
 
+app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
