@@ -2,44 +2,15 @@ const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
-const multer = require("multer");
 const bcrypt = require("bcrypt");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  //reject  a file
-  if ((file, mimetype === "image/jpeg" || file.mimetype === "image/png")) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 1024 * 1025 * 5 },
-});
-
-router.post("/signup", upload.single("profileImage"), (req, res, next) => {
-  let profileImagePath = "";
-  if (req.file) {
-    profileImagePath = req.file.path;
-  }
-
+router.post("/signup", (req, res, next) => {
   if (!req.body.password || req.body.password.trim().length === 0) {
     return res.status(400).json({
       message: "Password cannot be empty",
     });
   }
+
   User.find({ email: req.body.email })
     .exec()
     .then((user) => {
@@ -62,17 +33,20 @@ router.post("/signup", upload.single("profileImage"), (req, res, next) => {
                     error: err,
                   });
                 } else {
-                  const user = new User({
+                  let newUser = new User({
                     _id: new mongoose.Types.ObjectId(),
                     lastName: req.body.lastName,
                     firstName: req.body.firstName,
                     phoneNumber: req.body.phoneNumber,
                     email: req.body.email,
                     username: req.body.username,
-                    profileImage: profileImagePath,
+                    profileImage:
+                      req.body.profileImage ||
+                      "https://i.pinimg.com/474x/c2/27/80/c22780e94509f7d8b7745f68f1cfb897.jpg",
                     password: hash,
                   });
-                  user
+
+                  newUser
                     .save()
                     .then((result) => {
                       console.log(result);
@@ -94,7 +68,6 @@ router.post("/signup", upload.single("profileImage"), (req, res, next) => {
     });
 });
 
-///// para log-in
 router.post("/login", (req, res, next) => {
   const { email, username, password } = req.body;
   User.findOne({ $or: [{ email: email }, { username: username }] })
@@ -138,68 +111,60 @@ router.post("/login", (req, res, next) => {
     });
 });
 
-router.patch(
-  "/updateProfile/:id",
-  upload.single("profileImage"),
-  (req, res, next) => {
-    const id = req.params.id;
-    let profileImagePath = "";
-    if (req.file) {
-      profileImagePath = req.file.path;
-    }
+router.patch("/updateProfile/:id", (req, res, next) => {
+  const id = req.params.id;
 
-    const updateOps = {};
-    if (req.body.firstName) {
-      updateOps.firstName = req.body.firstName;
+  const updateOps = {};
+  if (req.body.firstName) {
+    updateOps.firstName = req.body.firstName;
+  }
+  if (req.body.lastName) {
+    updateOps.lastName = req.body.lastName;
+  }
+  if (req.body.phoneNumber) {
+    updateOps.phoneNumber = req.body.phoneNumber;
+  }
+  if (req.body.profileImage) {
+    updateOps.profileImage = req.body.profileImage;
+  }
+  if (req.body.email) {
+    if (!validateEmail(req.body.email)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+      });
     }
-    if (req.body.lastName) {
-      updateOps.lastName = req.body.lastName;
-    }
-    if (req.body.phoneNumber) {
-      updateOps.phoneNumber = req.body.phoneNumber;
-    }
-    if (profileImagePath) {
-      updateOps.profileImage = profileImagePath;
-    }
-    if (req.body.email) {
-      // Check if the email is valid
-      if (!validateEmail(req.body.email)) {
-        return res.status(400).json({
-          message: "Invalid email format",
+    updateOps.email = req.body.email;
+  }
+  if (req.body.password) {
+    bcrypt.hash(req.body.password, 10, (err, hash) => {
+      if (err) {
+        return res.status(500).json({
+          error: err,
         });
       }
-      updateOps.email = req.body.email;
-    }
-    if (req.body.password) {
-      bcrypt.hash(req.body.password, 10, (err, hash) => {
-        if (err) {
-          return res.status(500).json({
-            error: err,
-          });
-        }
-        updateOps.password = hash;
-        updateUser();
-      });
-    } else {
+      updateOps.password = hash;
       updateUser();
-    }
-    function updateUser() {
-      User.updateOne({ _id: id }, { $set: updateOps })
-        .exec()
-        .then((result) => {
-          res.status(200).json({
-            message: "Profile updated",
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(500).json({
-            error: err,
-          });
-        });
-    }
+    });
+  } else {
+    updateUser();
   }
-);
+
+  function updateUser() {
+    User.updateOne({ _id: id }, { $set: updateOps })
+      .exec()
+      .then((result) => {
+        res.status(200).json({
+          message: "Profile updated",
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          error: err,
+        });
+      });
+  }
+});
 
 function validateEmail(email) {
   const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;

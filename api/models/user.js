@@ -4,15 +4,11 @@ const userSchema = mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
   lastName: {
     type: String,
-    set: (value) => {
-      return value.charAt(0).toUpperCase() + value.slice(1);
-    },
+    set: (value) => value.charAt(0).toUpperCase() + value.slice(1),
   },
   firstName: {
     type: String,
-    set: (value) => {
-      return value.charAt(0).toUpperCase() + value.slice(1);
-    },
+    set: (value) => value.charAt(0).toUpperCase() + value.slice(1),
   },
   phoneNumber: String,
   email: {
@@ -23,7 +19,11 @@ const userSchema = mongoose.Schema({
       /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
   },
   username: { type: String, required: true },
-  profileImage: String,
+  profileImage: {
+    type: String,
+    default:
+      "https://i.pinimg.com/474x/c2/27/80/c22780e94509f7d8b7745f68f1cfb897.jpg",
+  },
   password: { type: String, required: true },
 });
 
