@@ -41,9 +41,7 @@ router.post("/signup", (req, res, next) => {
                     phoneNumber: req.body.phoneNumber,
                     email: req.body.email,
                     username: req.body.username,
-                    profileImage:
-                      req.body.profileImage ||
-                      "https://i.pinimg.com/474x/c2/27/80/c22780e94509f7d8b7745f68f1cfb897.jpg",
+                    profileImage: req.body.profileImage,
                     password: hash,
                   });
 

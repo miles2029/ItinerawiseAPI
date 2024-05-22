@@ -21,8 +21,6 @@ const userSchema = mongoose.Schema({
   username: { type: String, required: true },
   profileImage: {
     type: String,
-    default:
-      "https://i.pinimg.com/474x/c2/27/80/c22780e94509f7d8b7745f68f1cfb897.jpg",
   },
   password: { type: String, required: true },
 });
