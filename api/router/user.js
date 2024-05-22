@@ -88,8 +88,8 @@ router.get("/:id", (req, res, next) => {
       }
     })
     .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: err });
+      console.error("Error fetching user:", err); // Log the error message
+      res.status(500).json({ error: "Internal server error" }); // Send a generic error message
     });
 });
 
