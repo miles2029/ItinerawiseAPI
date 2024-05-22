@@ -69,6 +69,7 @@ router.post("/signup", (req, res, next) => {
 
 router.get("/:id", (req, res, next) => {
   const id = req.params.id;
+  console.log(`Fetching user with ID: ${id}`); // Log the ID being fetched
   User.findById(id)
     .select("lastName firstName phoneNumber email username profileImage")
     .exec()
@@ -76,20 +77,24 @@ router.get("/:id", (req, res, next) => {
       console.log("From Database:", doc);
       if (doc) {
         res.status(200).json({
-          user: doc,
+          success: true,
+          data: doc,
           request: {
             type: "GET",
           },
         });
       } else {
-        res
-          .status(404)
-          .json({ message: "No valid entry found for provided ID" });
+        console.log("No valid entry found for provided ID");
+        res.status(404).json({
+          success: false,
+          message: "No valid entry found for provided ID",
+        });
       }
     })
     .catch((err) => {
-      console.error("Error fetching user:", err); // Log the error message
-      res.status(500).json({ error: "Internal server error" }); // Send a generic error message
+      console.error("Error fetching user:", err.message); // Log the error message
+      console.error("Stack trace:", err.stack); // Log the stack trace for more details
+      res.status(500).json({ success: false, error: "Internal server error" });
     });
 });
 
