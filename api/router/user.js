@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const user = require("../models/user");
 
 router.post("/signup", (req, res, next) => {
   if (!req.body.password || req.body.password.trim().length === 0) {
@@ -65,6 +66,32 @@ router.post("/signup", (req, res, next) => {
             }
           });
       }
+    });
+});
+
+router.get("/:id", (req, res, next) => {
+  const id = req.params.id;
+  User.findById(id)
+    .select("lastName firstName phoneNumber email username profileImage")
+    .exec()
+    .then((doc) => {
+      console.log("From Database:", doc);
+      if (doc) {
+        res.status(200).json({
+          user: doc,
+          request: {
+            type: "GET",
+          },
+        });
+      } else {
+        res
+          .status(404)
+          .json({ message: "No valid entry found for provided ID" });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: err });
     });
 });
 
