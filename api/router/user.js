@@ -139,9 +139,10 @@ router.post("/login", (req, res, next) => {
     });
 });
 
-router.patch("/updateProfile/:id", (req, res, next) => {
+router.patch("/updateProfile/:id", async (req, res) => {
   const id = req.params.id;
   const updateOps = {};
+
   for (const key in req.body) {
     if (key === "email" && !validateEmail(req.body[key])) {
       return res.status(400).json({
@@ -151,42 +152,84 @@ router.patch("/updateProfile/:id", (req, res, next) => {
     updateOps[key] = req.body[key];
   }
 
-  User.updateOne({ _id: id }, { $set: updateOps })
-    .exec()
-    .then(() => {
-      return User.findById(id);
-    })
-    .then((updatedUser) => {
-      console.log(updatedUser);
-      if (!updatedUser) {
-        throw new Error("User not found");
-      }
-      res.status(200).json({
-        message: "User Updated",
-        updatedUser: {
-          _id: updatedUser._id,
-          lastName: updatedUser.lastName,
-          firstName: updatedUser.firstName,
-          phoneNumber: updatedUser.phoneNumber,
-          email: updatedUser.email,
-          profileImage: updatedUser.profileImage,
-          request: {
-            type: "GET",
-          },
-        },
+  if (updateOps.password) {
+    // Hash the new password
+    try {
+      const hashedPassword = await bcrypt.hash(updateOps.password, 10);
+      updateOps.password = hashedPassword;
+    } catch (err) {
+      return res.status(500).json({
+        error: "Failed to hash the password",
       });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        error: err.message || "An error occurred",
-      });
+    }
+  }
+
+  try {
+    // Update the user
+    await User.updateOne({ _id: id }, { $set: updateOps });
+
+    // Find the updated user
+    const updatedUser = await User.findById(id).exec();
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+
+    res.status(200).json({
+      message: "User Updated",
+      updatedUser: {
+        _id: updatedUser._id,
+        lastName: updatedUser.lastName,
+        firstName: updatedUser.firstName,
+        phoneNumber: updatedUser.phoneNumber,
+        email: updatedUser.email,
+        profileImage: updatedUser.profileImage,
+      },
     });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      error: err.message || "An error occurred",
+    });
+  }
 });
 
 function validateEmail(email) {
   const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
   return regex.test(email);
 }
+
+router.delete("/deleteUser/:id", (req, res, next) => {
+  const id = req.params.id;
+
+  User.findById(id)
+    .exec()
+    .then((doc) => {
+      if (!doc) {
+        return res
+          .status(404)
+          .json({ message: "No valid entry found for provided ID" });
+      }
+
+      return User.deleteOne({ _id: id })
+        .exec()
+        .then(() => {
+          res.status(200).json({
+            message: "User deleted",
+            _id: doc._id,
+            lastName: doc.lastName,
+            firstName: doc.firstName,
+            phoneNumber: doc.phoneNumber,
+            email: doc.email,
+            username: doc.username,
+          });
+        });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: err });
+    });
+});
+
+module.exports = router;
 
 module.exports = router;
