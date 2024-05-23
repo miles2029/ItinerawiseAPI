@@ -11,7 +11,6 @@ router.post("/signup", (req, res, next) => {
       message: "Password cannot be empty",
     });
   }
-
   User.find({ email: req.body.email })
     .exec()
     .then((user) => {
@@ -143,31 +142,41 @@ router.post("/login", (req, res, next) => {
 
 router.patch("/updateProfile/:id", (req, res, next) => {
   const id = req.params.id;
+  console.log(`Received request to update profile for user with id: ${id}`);
 
   const updateOps = {};
+
   if (req.body.firstName) {
     updateOps.firstName = req.body.firstName;
+    console.log(`Updating firstName to: ${req.body.firstName}`);
   }
   if (req.body.lastName) {
     updateOps.lastName = req.body.lastName;
+    console.log(`Updating lastName to: ${req.body.lastName}`);
   }
   if (req.body.phoneNumber) {
     updateOps.phoneNumber = req.body.phoneNumber;
+    console.log(`Updating phoneNumber to: ${req.body.phoneNumber}`);
   }
   if (req.body.profileImage) {
     updateOps.profileImage = req.body.profileImage;
+    console.log(`Updating profileImage`);
   }
   if (req.body.email) {
     if (!validateEmail(req.body.email)) {
+      console.log(`Invalid email format: ${req.body.email}`);
       return res.status(400).json({
         message: "Invalid email format",
       });
     }
     updateOps.email = req.body.email;
+    console.log(`Updating email to: ${req.body.email}`);
   }
   if (req.body.password) {
+    console.log(`Updating password`);
     bcrypt.hash(req.body.password, 10, (err, hash) => {
       if (err) {
+        console.error(`Error hashing password: ${err}`);
         return res.status(500).json({
           error: err,
         });
@@ -180,15 +189,19 @@ router.patch("/updateProfile/:id", (req, res, next) => {
   }
 
   function updateUser() {
+    console.log(
+      `Executing update with operations: ${JSON.stringify(updateOps)}`
+    );
     User.updateOne({ _id: id }, { $set: updateOps })
       .exec()
       .then((result) => {
+        console.log(`Profile updated successfully for user with id: ${id}`);
         res.status(200).json({
           message: "Profile updated",
         });
       })
       .catch((err) => {
-        console.log(err);
+        console.error(`Error updating profile: ${err}`);
         res.status(500).json({
           error: err,
         });
