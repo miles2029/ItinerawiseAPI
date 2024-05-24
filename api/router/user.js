@@ -152,18 +152,6 @@ router.patch("/updateProfile/:id", async (req, res) => {
     updateOps[key] = req.body[key];
   }
 
-  if (updateOps.password) {
-    // Hash the new password
-    try {
-      const hashedPassword = await bcrypt.hash(updateOps.password, 10);
-      updateOps.password = hashedPassword;
-    } catch (err) {
-      return res.status(500).json({
-        error: "Failed to hash the password",
-      });
-    }
-  }
-
   try {
     // Update the user
     await User.updateOne({ _id: id }, { $set: updateOps });
@@ -230,6 +218,42 @@ router.delete("/deleteUser/:id", (req, res, next) => {
     });
 });
 
-module.exports = router;
+router.patch("/changePassword/:id", async (req, res) => {
+  const id = req.params.id;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    // Find the user
+    const user = await User.findById(id).exec();
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    // Verify the current password
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({
+        error: "Current password is incorrect",
+      });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password
+    await User.updateOne({ _id: id }, { $set: { password: hashedPassword } });
+
+    res.status(200).json({
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "An error occurred",
+    });
+  }
+});
 
 module.exports = router;
