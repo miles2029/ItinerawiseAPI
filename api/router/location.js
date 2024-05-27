@@ -13,6 +13,8 @@ router.post("/create", (req, res, next) => {
     time: req.body.time,
     locationImage: req.body.locationImage,
     description: req.body.description,
+    latitude: req.body.latitude,
+    longitude: req.body.longitude,
   });
   locationDetails
     .save()
@@ -25,6 +27,8 @@ router.post("/create", (req, res, next) => {
           price: result.price,
           location: result.location,
           description: result.description,
+          latitude: result.latitude,
+          longitude: result.longitude,
           _id: result._id,
           request: {
             type: "GET",
@@ -56,6 +60,8 @@ router.get("/details", (req, res, next) => {
             time: doc.time,
             locationImage: doc.locationImage,
             description: doc.description,
+            latitude: doc.latitude,
+            longitude: doc.longitude,
             _id: doc.id,
             request: {
               type: "GET",
@@ -95,6 +101,57 @@ router.get("/details/:id", (req, res, next) => {
             time: doc.time,
             locationImage: doc.locationImage,
             description: doc.description,
+            latitude: doc.latitude,
+            longitude: doc.longitude,
+            _id: doc.id,
+            request: {
+              type: "GET",
+              url: "http://localhost:3000/details/" + doc._id,
+            },
+          },
+        });
+      } else {
+        res.status(404).json({
+          message: "No Entry Found for Provided ID",
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: err,
+      });
+    });
+});
+
+router.patch("/updateDetails/:id", (req, res, next) => {
+  const id = req.params.id; // Get the ID from the request parameters
+  const updateOps = {}; // Initialize an empty object to store the fields to be updated
+
+  // Loop through the request body and populate the updateOps object
+  for (const ops of Object.keys(req.body)) {
+    updateOps[ops] = req.body[ops];
+  }
+
+  // Update the document and return the updated document
+  LocationDetails.findByIdAndUpdate(id, { $set: updateOps }, { new: true })
+    .select(
+      "name price _id location time locationImage description latitude longitude"
+    )
+    .exec()
+    .then((doc) => {
+      if (doc) {
+        res.status(200).json({
+          message: "Location details updated",
+          locationDetails: {
+            name: doc.name,
+            price: doc.price,
+            location: doc.location,
+            time: doc.time,
+            locationImage: doc.locationImage,
+            description: doc.description,
+            latitude: doc.latitude,
+            longitude: doc.longitude,
             _id: doc.id,
             request: {
               type: "GET",

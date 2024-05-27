@@ -8,6 +8,8 @@ const locationSchema = mongoose.Schema({
   time: { type: String, required: true },
   locationImage: { type: String, required: true },
   description: { type: String, required: true },
+  latitude: { type: String },
+  longitude: { type: String },
 });
 
 module.exports = mongoose.model("Location Details", locationSchema);
