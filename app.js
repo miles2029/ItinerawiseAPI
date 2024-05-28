@@ -5,8 +5,10 @@ const morgan = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
+const paymentRoute = require("./api/router/transaction");
 const locationRoutes = require("./api/router/location");
 const userRoutes = require("./api/router/user");
+
 mongoose.connect(
   "mongodb+srv://maratasmiles9:putoflan123@intprogapi.41polww.mongodb.net/Itinerawise?retryWrites=true&w=majority&appName=intprogAPI"
 );
@@ -34,7 +36,7 @@ app.use(bodyParser.json());
 
 app.use("/user", userRoutes);
 app.use("/location", locationRoutes);
-
+app.use("/payment", paymentRoute);
 app.use((req, res, next) => {
   const error = new Error("Not found");
   error.status = 404;
