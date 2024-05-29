@@ -12,55 +12,66 @@ router.post("/create-subscription", async (req, res) => {
     req.body;
 
   try {
-    // Create a PaymentIntent
+    // Fetch PaymentIntent client secret from your backend
+    const { clientSecret } = await fetchPaymentIntentFromBackend(
+      price,
+      paymentMethodId
+    );
+
+    // Save subscription details to the Subscription collection
+    const subscription = new Subscription({
+      productName,
+      price,
+      userId,
+      cardholderName,
+      email,
+      paymentMethodId,
+      clientSecret,
+    });
+    await subscription.save();
+
+    res.json({
+      clientSecret: clientSecret,
+      productName: productName,
+      price: price,
+    });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+router.post("/get-payment-intent", async (req, res) => {
+  const { price, paymentMethodId } = req.body;
+
+  try {
+    // Create a PaymentIntent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: price * 100, // Amount in cents
+      amount: price * 100,
       currency: "usd",
       payment_method: paymentMethodId,
       confirmation_method: "manual",
       confirm: true,
     });
 
-    // Create a new customer
-    const customer = await stripe.customers.create({
-      email: email,
-      name: cardholderName,
-      payment_method: paymentMethodId,
-      invoice_settings: {
-        default_payment_method: paymentMethodId,
-      },
-    });
-
-    // Define the priceId
-    const priceId = "price_1PLXFk2MA5ECHB0FiahruIHv";
-
-    // Create a new subscription
-    const subscription = await stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: priceId }],
-      expand: ["latest_invoice.payment_intent"],
-      default_payment_method: paymentMethodId,
-      default_source: paymentMethodId,
-    });
-
-    // Save subscription details to MongoDB
-    const newSubscription = new Subscription({
-      userId,
-      stripeCustomerId: customer.id,
-      stripeSubscriptionId: subscription.id,
-      productName,
-      price,
-    });
-
-    await newSubscription.save();
-
-    res.json({
-      subscriptionId: subscription.id,
-      clientSecret: paymentIntent.client_secret,
-    });
+    // Return the client secret to the client
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
   }
 });
+
+async function fetchPaymentIntentFromBackend(price, paymentMethodId) {
+  // Make a request to your backend to fetch the PaymentIntent client secret
+  const response = await fetch(
+    "https://itinerawiseapi-xk5b.onrender.com/payment/get-payment-intent",
+    {
+      method: "POST",
+      body: JSON.stringify({ price, paymentMethodId }),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  const data = await response.json();
+  return data;
+}
 
 module.exports = router;
