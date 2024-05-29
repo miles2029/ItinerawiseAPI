@@ -12,6 +12,15 @@ router.post("/create-subscription", async (req, res) => {
     req.body;
 
   try {
+    // Create a PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: price * 100, // Amount in cents
+      currency: "usd",
+      payment_method: paymentMethodId,
+      confirmation_method: "manual",
+      confirm: true,
+    });
+
     // Create a new customer
     const customer = await stripe.customers.create({
       email: email,
@@ -30,6 +39,8 @@ router.post("/create-subscription", async (req, res) => {
       customer: customer.id,
       items: [{ price: priceId }],
       expand: ["latest_invoice.payment_intent"],
+      default_payment_method: paymentMethodId,
+      default_source: paymentMethodId,
     });
 
     // Save subscription details to MongoDB
@@ -43,7 +54,10 @@ router.post("/create-subscription", async (req, res) => {
 
     await newSubscription.save();
 
-    res.json({ subscriptionId: subscription.id });
+    res.json({
+      subscriptionId: subscription.id,
+      clientSecret: paymentIntent.client_secret,
+    });
   } catch (error) {
     res.status(500).send(error.message);
   }
