@@ -3,6 +3,7 @@ const router = express.Router();
 const bodyParser = require("body-parser");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const PaymentDetails = require("../models/PaymentDetails");
+const mongoose = require("mongoose");
 
 router.use(bodyParser.json());
 
@@ -31,27 +32,36 @@ router.post("/create-intent", async (req, res) => {
 });
 
 router.post("/save-payment-details", async (req, res) => {
-  const { userId, fullName, date, amount, clientString } = req.body;
-
-  if (!userId || !fullName || !clientString) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
   const paymentDetails = new PaymentDetails({
     _id: new mongoose.Types.ObjectId(),
-    userId,
-    fullName,
-    date,
-    amount,
-    clientString,
+    userId: req.body.userId,
+    fullName: req.body.fullName,
+    date: req.body.date,
+    amount: req.body.amount,
+    clientString: req.body.clientString,
   });
-
-  try {
-    const savedPaymentDetails = await paymentDetails.save();
-    res.status(201).json(savedPaymentDetails);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  paymentDetails
+    .save()
+    .then((result) => {
+      console.log(result);
+      res.status(201).json({
+        message: "Created details successfully",
+        paymentDetails: {
+          _id: result._id,
+          userId: result.userId,
+          fullName: result.fullName,
+          date: result.date,
+          amount: result.amount,
+          clientString: result.clientString,
+        },
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: err.message,
+      });
+    });
 });
 
 module.exports = router;
