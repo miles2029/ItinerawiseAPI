@@ -24,7 +24,6 @@ router.post("/create-intent", async (req, res) => {
       client_secret: paymentIntent.client_secret,
       date: date,
       amount: amount,
-      paymentMethod: paymentIntent.automatic_payment_methods,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({ error: error.message });
@@ -39,6 +38,7 @@ router.post("/save-payment-details", async (req, res) => {
   }
 
   const paymentDetails = new PaymentDetails({
+    _id: new mongoose.Types.ObjectId(),
     userId,
     fullName,
     date,
@@ -53,7 +53,5 @@ router.post("/save-payment-details", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-module.exports = router;
 
 module.exports = router;

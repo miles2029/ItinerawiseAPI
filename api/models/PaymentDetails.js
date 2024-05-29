@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const paymentDetailsSchema = new Schema({
+  _id: mongoose.Schema.Types.ObjectId,
   userId: {
     type: String,
     required: true,
@@ -15,6 +16,6 @@ const paymentDetailsSchema = new Schema({
   clientString: { type: String },
 });
 
-const PaymentDetails = mongoose.model("PaymentDetails", paymentDetailsSchema);
+const PaymentDetails = mongoose.model("Payment Details", paymentDetailsSchema);
 
 module.exports = PaymentDetails;

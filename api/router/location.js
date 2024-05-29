@@ -47,7 +47,9 @@ router.post("/create", (req, res, next) => {
 
 router.get("/details", (req, res, next) => {
   LocationDetails.find()
-    .select("name price _id location time locationImage description latitude longitude")
+    .select(
+      "name price _id location time locationImage description latitude longitude"
+    )
     .exec()
     .then((docs) => {
       const response = {
@@ -89,7 +91,9 @@ router.get("/details", (req, res, next) => {
 router.get("/details/:id", (req, res, next) => {
   const id = req.params.id; // Get the ID from the request parameters
   LocationDetails.findById(id) // Use findById to find a document by its ID
-    .select("name price _id location time locationImage description latitude longitude")
+    .select(
+      "name price _id location time locationImage description latitude longitude"
+    )
     .exec()
     .then((doc) => {
       if (doc) {
