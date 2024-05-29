@@ -1,26 +1,16 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const subscriptionSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-  },
-  stripeCustomerId: {
-    type: String,
-    required: true,
-  },
-  stripeSubscriptionId: {
-    type: String,
-    required: true,
-  },
-  productName: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
+const subscriptionSchema = new Schema({
+  productName: String,
+  price: Number,
+  userId: String,
+  cardholderName: String,
+  email: String,
+  paymentMethodId: String,
+  clientSecret: String,
 });
 
-module.exports = mongoose.model("Subscription", subscriptionSchema);
+const Subscription = mongoose.model("Subscription", subscriptionSchema);
+
+module.exports = Subscription;
