@@ -30,4 +30,29 @@ router.post("/create-intent", async (req, res) => {
   }
 });
 
+router.post("/save-payment-details", async (req, res) => {
+  const { userId, fullName, date, amount, clientString } = req.body;
+
+  if (!userId || !fullName || !clientString) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const paymentDetails = new PaymentDetails({
+    userId,
+    fullName,
+    date,
+    amount,
+    clientString,
+  });
+
+  try {
+    const savedPaymentDetails = await paymentDetails.save();
+    res.status(201).json(savedPaymentDetails);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
+
 module.exports = router;

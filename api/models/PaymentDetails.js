@@ -12,7 +12,7 @@ const paymentDetailsSchema = new Schema({
   },
   date: { type: String },
   amount: { type: String },
-  paymentMethod: { type: String },
+  clientString: { type: String },
 });
 
 const PaymentDetails = mongoose.model("PaymentDetails", paymentDetailsSchema);
