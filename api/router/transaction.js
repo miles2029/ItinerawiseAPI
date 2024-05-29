@@ -24,6 +24,7 @@ router.post("/create-intent", async (req, res) => {
       client_secret: paymentIntent.client_secret,
       date: date,
       amount: amount,
+      paymentMethod: paymentIntent.automatic_payment_methods,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({ error: error.message });
