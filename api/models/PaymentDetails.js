@@ -10,6 +10,9 @@ const paymentDetailsSchema = new Schema({
     type: String,
     required: true,
   },
+  date: { type: String },
+  amount: { type: String },
+  paymentMethod: { type: String },
 });
 
 const PaymentDetails = mongoose.model("PaymentDetails", paymentDetailsSchema);

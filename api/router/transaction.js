@@ -13,26 +13,20 @@ router.post("/create-intent", async (req, res) => {
       currency: "usd",
       automatic_payment_methods: { enabled: true },
     });
-    res.json({ client_secret: paymentIntent.client_secret });
+
+    // Extract date and amount from paymentIntent
+    const { created, amount } = paymentIntent;
+
+    // Format date in a readable format
+    const date = new Date(created * 1000).toISOString();
+
+    res.json({
+      client_secret: paymentIntent.client_secret,
+      date: date,
+      amount: amount,
+    });
   } catch (error) {
     res.status(error.statusCode || 500).json({ error: error.message });
-  }
-});
-
-router.post("/save-payment/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const fullName = req.body.fullName; // Assuming the full name is sent in the request body
-    const paymentDetails = new PaymentDetails({
-      userId: userId,
-      fullName: fullName,
-      ...req.body,
-    });
-    await paymentDetails.save();
-    res.status(200).send("Payment details saved successfully");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Failed to save payment details");
   }
 });
 
