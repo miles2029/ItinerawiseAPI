@@ -2,12 +2,9 @@ const express = require("express");
 const router = express.Router();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const stripe = require("stripe")(
-  "sk_test_51PF9Fd2MA5ECHB0FyoeqK8hlIPTkaCweJl657amxGwEHsyYh8bUPEuSi4niFFx44R59FSnNxCJRi5nDGf1n3ObAa00UJ1u7bw8"
-);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Subscription = require("../models/Subscription");
 
-// Ensure the app uses bodyParser middleware
 router.use(bodyParser.json());
 
 router.post("/create-subscription", async (req, res) => {
@@ -15,6 +12,7 @@ router.post("/create-subscription", async (req, res) => {
     req.body;
 
   try {
+    // Create a new customer
     const customer = await stripe.customers.create({
       email: email,
       name: cardholderName,
@@ -24,14 +22,17 @@ router.post("/create-subscription", async (req, res) => {
       },
     });
 
+    // Define the priceId
     const priceId = "price_1PLXFk2MA5ECHB0FiahruIHv";
 
+    // Create a new subscription
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
       expand: ["latest_invoice.payment_intent"],
     });
 
+    // Save subscription details to MongoDB
     const newSubscription = new Subscription({
       userId,
       stripeCustomerId: customer.id,

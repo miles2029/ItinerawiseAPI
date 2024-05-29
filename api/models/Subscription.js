@@ -1,12 +1,9 @@
-// models/Subscription.js
 const mongoose = require("mongoose");
-const { Schema } = mongoose;
 
-const SubscriptionSchema = new Schema({
+const subscriptionSchema = new mongoose.Schema({
   userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: "User",
   },
   stripeCustomerId: {
     type: String,
@@ -24,10 +21,6 @@ const SubscriptionSchema = new Schema({
     type: Number,
     required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
 });
 
-module.exports = mongoose.model("Subscription", SubscriptionSchema);
+module.exports = mongoose.model("Subscription", subscriptionSchema);
